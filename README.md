@@ -34,8 +34,8 @@ flowchart LR
 4. The workflow pauses for up to 24 hours until an owner approves or rejects the order through the API. Staff cannot approve.
 5. On approval the supplier is notified. On rejection or timeout the order is closed.
 
-![Workflow](docs/workflow(1).png)
-![Workflow](docs/workflow(2).png)
+![Workflow](docs/workflow (1).png)
+![Workflow](docs/workflow (2).png)
 
 ## Design decisions
 
@@ -67,9 +67,9 @@ flowchart LR
 - Monthly budget with alerts at 50% and 80% actual spend and 100% forecast.
 - CI on every push: `terraform fmt`, `validate`, Python compile, JS syntax check.
 
-![Monitoring](docs/monitoring(1).png)
-![Monitoring](docs/monitoring(2).png)
-![Monitoring](docs/monitoring(3).png)
+![Monitoring](docs/monitoring (1).png)
+![Monitoring](docs/monitoring (2).png)
+![Monitoring](docs/monitoring (3).png)
 
 ## Cost
 
