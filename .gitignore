@@ -1,0 +1,11 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform/build/
+terraform.tfvars
+__pycache__/
+*.pyc
+.env
+frontend/config.js
+*.zip
+.DS_Store

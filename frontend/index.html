@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockWatch</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231B2B42'/%3E%3Crect x='7' y='8' width='18' height='4' rx='1' fill='%23fff'/%3E%3Crect x='7' y='14' width='18' height='4' rx='1' fill='%23fff'/%3E%3Crect x='7' y='20' width='10' height='4' rx='1' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Orange means "someone needs to act": low stock and orders waiting for approval.
+     Everything else stays in quiet slate so those two things stand out. */
+  :root {
+    --bg: #E8ECF0;
+    --surface: #FFFFFF;
+    --surface-2: #F3F5F8;
+    --ink: #14202E;
+    --muted: #5A6978;
+    --line: #D3DAE1;
+    --brand: #1B2B42;
+    --brand-ink: #FFFFFF;
+    --ok: #2C7A4B;
+    --ok-bg: #E1F1E7;
+    --low: #B04E08;
+    --low-bg: #FCE8D5;
+    --out: #B3261E;
+    --out-bg: #F9DEDB;
+    --focus: #2457D6;
+    --font-display: "Bricolage Grotesque", "Public Sans", system-ui, sans-serif;
+    --font-ui: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F1822;
+      --surface: #16222E;
+      --surface-2: #1B2937;
+      --ink: #E6EDF3;
+      --muted: #8DA0B2;
+      --line: #2A3A4A;
+      --brand: #E6EDF3;
+      --brand-ink: #0F1822;
+      --ok: #5CC08A;
+      --ok-bg: #17382A;
+      --low: #F0A15C;
+      --low-bg: #3D2A17;
+      --out: #F28B82;
+      --out-bg: #3E1D1B;
+      --focus: #7FA6FF;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  h1, h2, h3, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink);
+    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { background: var(--surface-2); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+  .btn-primary:hover:not(:disabled) { background: var(--brand); filter: brightness(1.12); }
+  .btn-danger { color: var(--out); }
+  .btn-quiet { border-color: transparent; background: transparent; color: var(--muted); }
+  .btn-wide { width: 100%; padding: 10px 14px; font-size: 15px; }
+
+  /* Pills */
+  .pill {
+    display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+    background: var(--surface-2); color: var(--muted);
+  }
+  .pill-ok { background: var(--ok-bg); color: var(--ok); }
+  .pill-low, .pill-pending { background: var(--low-bg); color: var(--low); }
+  .pill-out { background: var(--out-bg); color: var(--out); }
+
+  /* Login */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+  .login-box { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 32px 28px; display: flex; flex-direction: column; gap: 16px; }
+  .login-brand { font-family: var(--font-display); font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; }
+  .login-lede { color: var(--muted); }
+  #login-form { display: flex; flex-direction: column; gap: 6px; }
+  #login-form label { font-size: 13px; font-weight: 600; margin-top: 8px; }
+  #login-form input { padding: 10px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); }
+  #login-form .btn { margin-top: 16px; }
+  .form-error { color: var(--out); font-size: 13px; margin-top: 8px; }
+  .login-note { font-size: 13px; color: var(--muted); }
+
+  /* App shell */
+  .topbar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+    padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
+    background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .brand { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; }
+  .who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+  .who-email { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+  .page {
+    max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;
+    padding: 24px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px));
+  }
+  .status-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+  .status-line { font-family: var(--font-display); font-size: 24px; line-height: 1.25; font-weight: 500; letter-spacing: -0.01em; max-width: 40ch; text-wrap: balance; }
+  .status-line.attention { color: var(--low); }
+  .updated { font-size: 13px; color: var(--muted); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+  .rail { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+  .panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; }
+  .panel-head h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+
+  /* Add product form */
+  #add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 0 16px 16px; }
+  #add-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; min-width: 0; }
+  #add-form input { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-weight: 400; min-width: 0; }
+  #add-form .form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Stock table */
+  .table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 13px; font-weight: 600; color: var(--muted); padding: 10px 14px; white-space: nowrap; }
+  td { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:first-child td { border-top: 0; }
+  .p-name { font-weight: 600; overflow-wrap: anywhere; }
+  .p-sku { font-size: 13px; color: var(--muted); }
+  .stock-cell { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .stock-num { font-family: var(--font-display); font-size: 30px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2ch; }
+  .stock-num.low { color: var(--low); }
+  .stock-num.out { color: var(--out); }
+  .stock-meta { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .meter { position: relative; width: 96px; height: 6px; border-radius: 3px; background: var(--line); }
+  .meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--ok); }
+  .meter-fill.low { background: var(--low); }
+  .meter-fill.out { background: var(--out); }
+  .meter-tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: 0.55; }
+  .num { font-variant-numeric: tabular-nums; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .empty { padding: 28px 16px; color: var(--muted); border-top: 1px solid var(--line); max-width: 52ch; }
+
+  /* Rail lists */
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+  .item-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 6px 10px; }
+  .item-title { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+  .item-sub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+
+  .toasts { position: fixed; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; padding: 0 16px; }
+  .toast { background: var(--brand); color: var(--brand-ink); padding: 10px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; max-width: 480px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18); }
+  .toast.error { background: var(--out); color: #fff; }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .col-supplier, .col-qty { display: none; }
+  }
+  @media (max-width: 520px) {
+    .status-line { font-size: 21px; }
+    .meter { width: 72px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-view" class="login" hidden>
+  <div class="login-box">
+    <h1 class="login-brand">StockWatch</h1>
+    <p class="login-lede">See what is running low, and approve reorders before you run out.</p>
+    <form id="login-form" novalidate>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <p id="login-error" class="form-error" role="alert" hidden></p>
+      <button id="login-btn" class="btn btn-primary btn-wide" type="submit">Sign in</button>
+    </form>
+    <p class="login-note">Accounts are created by an owner. There is no public sign-up.</p>
+  </div>
+</div>
+
+<div id="app" hidden></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

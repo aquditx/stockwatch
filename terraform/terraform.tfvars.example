@@ -1,0 +1,3 @@
+alert_email      = "you@example.com"
+region           = "ap-south-1"
+budget_limit_usd = 10

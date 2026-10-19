@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Format check
+        run: terraform -chdir=terraform fmt -check -recursive
+      - name: Init (no backend, no credentials)
+        run: terraform -chdir=terraform init -backend=false
+      - name: Validate
+        run: terraform -chdir=terraform validate
+
+  code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Lambda code
+        run: python -m compileall -q lambdas
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Syntax-check the dashboard
+        run: node --check frontend/app.js
