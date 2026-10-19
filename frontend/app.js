@@ -11,6 +11,7 @@
     products: [],
     orders: [],
     alerts: [],
+    forecast: {},
     loaded: false,
     refreshError: false,
     lastUpdated: null,
@@ -293,6 +294,19 @@
     );
   }
 
+  function forecastCell(p) {
+    var f = state.forecast[p.product_id];
+    if (!f) return h("span", { class: "p-sku" }, "No data");
+    if (f.days_left === null || f.days_left === undefined) {
+      return h("span", { class: "p-sku" }, "No sales in 7 days");
+    }
+    var soon = f.days_left <= 7;
+    return h("div", null,
+      h("span", { class: "pill " + (soon ? "pill-low" : "pill-ok") }, "Runs out in " + f.days_left + " days"),
+      h("div", { class: "p-sku" }, f.avg_daily + " a day, order " + f.suggested_qty)
+    );
+  }
+
   function productActions(p) {
     var id = p.product_id;
     var busy = state.busy.has("adj:" + id) || state.busy.has("del:" + id);
@@ -330,6 +344,7 @@
         h("td", null, stockCell(p)),
         h("td", { class: "num" }, p.reorder_threshold),
         h("td", { class: "num col-qty" }, p.reorder_qty),
+        h("td", { class: "col-forecast" }, forecastCell(p)),
         h("td", { class: "col-supplier" }, p.supplier_email),
         h("td", null, productActions(p))
       );
@@ -343,6 +358,7 @@
             h("th", { scope: "col" }, "In stock"),
             h("th", { scope: "col" }, "Reorder at"),
             h("th", { scope: "col", class: "col-qty" }, "Order qty"),
+            h("th", { scope: "col", class: "col-forecast" }, "Forecast"),
             h("th", { scope: "col", class: "col-supplier" }, "Supplier"),
             h("th", { scope: "col" }, h("span", { class: "sr-only" }, "Actions"))
           )),
@@ -421,7 +437,11 @@
       api("GET", "/products?limit=100"),
       api("GET", "/orders?limit=50"),
       api("GET", "/alerts?limit=20"),
+      // Forecast is optional: it only exists once the analytics module is deployed.
+      api("GET", "/forecast").catch(function () { return { items: [] }; }),
     ]).then(function (r) {
+      state.forecast = {};
+      (r[3].items || []).forEach(function (f) { state.forecast[f.product_id] = f; });
       state.products = r[0].items || [];
       state.orders = r[1].items || [];
       state.alerts = r[2].items || [];

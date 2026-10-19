@@ -89,6 +89,20 @@ Dashboard: the CloudFront URL from `terraform output site_url`. To run it locall
 
 Tests: `scripts/smoke_test_phase3.ps1` creates products, drives stock below the threshold, and checks the alert, the order, the 403 for staff, the 409 on double approval and the one-order-per-product rule.
 
+## Sales analytics (optional module)
+
+`terraform/analytics.tf` adds a relational reporting side to the system:
+
+- **VPC** with private subnets that have no internet route, a DynamoDB and S3 gateway endpoint, and one Secrets Manager interface endpoint. No NAT gateway.
+- **RDS Postgres** (private, encrypted, password generated and kept in Secrets Manager) stores sales history.
+- **Lambda in the VPC** turns each stock decrease on the DynamoDB stream into a sale row (idempotent by stream event ID). A second Lambda serves `GET /forecast`: days of stock left and a suggested order size.
+- **ECS Fargate** runs a nightly report (EventBridge schedule, midnight IST) that writes a `daily_report` table and emails a summary through SNS.
+- The dashboard shows a forecast column when the module is deployed.
+
+Deploy: run `scripts/install_analytics_deps.ps1`, then `terraform apply`. Test with `scripts/smoke_test_phase7.ps1`, and start the report now with `scripts/run_report.ps1`.
+
+Known limits of this module: the database connection is encrypted but the RDS certificate is not verified, the Fargate task runs in a public subnet (no inbound access) to avoid a NAT gateway, and the database is single-AZ.
+
 ## Repo layout
 
 ```
